@@ -573,7 +573,7 @@ VALUES ('ch1', 'One', 'One', '2023-01-02', 2000);
 
 -- 2. Вставка видео с несуществ. Channel_ID
 INSERT INTO Videos (ID, Channel_ID, Project_ID, Title, Description, CreationDate, Duration, LikeCount, DislikeCount, CommentCount, ViewCount) 
-VALUES ('vid1', 'none_channel', NULL, 'Title', 'Description', '2024-01-01', 30, 10, 0, 5, 10);
+VALUES ('vid1', 'none_channel', 1, 'Title', 'Description', '2024-01-01', 30, 10, 0, 5, 10);
 
 -- 3. Вставка отрицательного значения SubscriberCount
 INSERT INTO Channels (ID, Title, Description, CreationDate, SubscriberCount) 
