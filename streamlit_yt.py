@@ -56,7 +56,10 @@ def visualize_data(topic):
 
     @st.cache_data
     def fetch_data(query):
-        return pd.read_sql_query(query, conn)
+        try:
+            return pd.read_sql_query(query, conn)
+        except Exception as e:
+            st.error(f"Ошибка выполнения запроса: {e}")
 
     def highlight_max(val, column_name):
         if column_name == 'Комментарии-Продолжительность':
