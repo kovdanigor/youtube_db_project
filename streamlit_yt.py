@@ -500,7 +500,7 @@ def visualize_data(topic):
 # ------
 st.set_page_config(page_title="Интерактивный дашборд", layout="wide")
 
-st.sidebar.image("medium_quality.png", use_container_width=True)
+st.sidebar.image("data/medium_quality.png", use_container_width=True)
 
 if 'conn' not in st.session_state:
     st.session_state['conn'] = None
