@@ -392,111 +392,57 @@ def visualize_data(topic):
 
     elif topic == "Проекты":
         incomes_df = fetch_data('''
-        SELECT Projects.Title AS Project, Incomes.Amount, 
-                                Incomes.CreationDate, 
-                                Channels.Title AS Channel, Incomes.Category
-        FROM Incomes
-        JOIN Projects ON Incomes.Project_ID = Projects.ID
-        JOIN Videos ON Projects.ID = Videos.Project_ID
-        JOIN Channels ON Videos.Channel_ID = Channels.ID; ''')
+                                SELECT Projects.Title AS Project, SUM(Incomes.Amount) AS TotalIncome
+                                FROM Incomes JOIN Projects ON Incomes.Project_ID = Projects.ID
+                                GROUP BY Projects.Title 
+                                ORDER BY TotalIncome DESC
+                                LIMIT 10; ''')
 
-        costs_df = fetch_data('''
-        SELECT Projects.Title AS Project, Costs.Amount, Costs.CreationDate, 
-                              Channels.Title AS Channel, Costs.Category
-        FROM Costs
-        JOIN Projects ON Costs.Project_ID = Projects.ID
-        JOIN Videos ON Projects.ID = Videos.Project_ID
-        JOIN Channels ON Videos.Channel_ID = Channels.ID; ''')
+        costs_df = fetch_data(''' SELECT Projects.Title AS Project, SUM(Costs.Amount) AS TotalCost
+                                  FROM Costs JOIN Projects ON Costs.Project_ID = Projects.ID
+                                  GROUP BY Projects.Title 
+                                  ORDER BY TotalCost DESC
+                                  LIMIT 10; ''')
 
-        st.header("Топ-10 прибыльных и убыточных проектов")
+        income_categories_df = fetch_data(''' SELECT Category, SUM(Amount) AS TotalAmount
+                                              FROM Incomes GROUP BY Category; ''')
 
-        incomes_df['CreationDate'] = pd.to_datetime(incomes_df['CreationDate'])
-        costs_df['CreationDate'] = pd.to_datetime(costs_df['CreationDate'])
+        cost_categories_df = fetch_data(''' SELECT Category, SUM(Amount) AS TotalAmount
+                                            FROM Costs GROUP BY Category; ''')
 
-        selected_channel = st.selectbox(
-            "Выберите канал:", incomes_df['Channel'].unique())
-
-        filtered_incomes = incomes_df[incomes_df['Channel']
-                                      == selected_channel]
-        filtered_costs = costs_df[costs_df['Channel'] == selected_channel]
-
-        min_year = min(filtered_incomes['CreationDate'].dt.year.min(),
-                       filtered_costs['CreationDate'].dt.year.min())
-
-        max_year = max(filtered_incomes['CreationDate'].dt.year.max(),
-                       filtered_costs['CreationDate'].dt.year.max())
-
-        selected_years = st.slider(
-            "Выберите диапазон лет:", min_value=min_year,
-            max_value=max_year, value=(min_year, max_year), step=1)
-
-        filtered_incomes = filtered_incomes[
-            (filtered_incomes['CreationDate'].dt.year >= selected_years[0]) &
-            (filtered_incomes['CreationDate'].dt.year <= selected_years[1])]
-
-        filtered_costs = filtered_costs[
-            (filtered_costs['CreationDate'].dt.year >= selected_years[0]) &
-            (filtered_costs['CreationDate'].dt.year <= selected_years[1])]
-
-        top_incomes = filtered_incomes.groupby(
-            'Project')['Amount'].sum().reset_index().nlargest(10, 'Amount')
-        top_costs = filtered_costs.groupby(
-            'Project')['Amount'].sum().reset_index().nlargest(10, 'Amount')
+        st.header("Топ-10 проектов по доходам и расходам")
 
         left_col, right_col = st.columns(2)
 
         with left_col:
-            fig_incomes = px.bar(
-                top_incomes,
-                x='Amount',
-                y='Project',
-                orientation='h',
-                color='Project',
-                title="Топ проектов по доходам",
-                labels={'Amount': 'Сумма доходов', 'Project': 'Проект'})
+            fig_incomes = px.bar(incomes_df, x='TotalIncome', y='Project',
+                                 orientation='h', color='Project',
+                                 title="Топ проектов по доходам",
+                                 labels={'TotalIncome': 'Сумма доходов', 'Project': 'Проект'})
 
-            fig_incomes.update_layout(xaxis_title=None, yaxis_title=None,
-                                      showlegend=False)
-
+            fig_incomes.update_layout(
+                xaxis_title=None, yaxis_title=None, showlegend=False)
             st.plotly_chart(fig_incomes, use_container_width=True)
 
-        with right_col:
-            fig_costs = px.bar(
-                top_costs,
-                x='Amount', y='Project', orientation='h', color='Project',
-                title="Топ проектов по расходам",
-                labels={'Amount': 'Сумма расходов', 'Project': 'Проект'})
-
-            fig_costs.update_layout(xaxis_title=None,
-                                    yaxis_title=None, showlegend=False)
-
-            st.plotly_chart(fig_costs, use_container_width=True)
+            with right_col:
+                fig_costs = px.bar(costs_df, x='TotalCost', y='Project',
+                                   orientation='h', color='Project',
+                                   title="Топ проектов по расходам",
+                                   labels={'TotalCost': 'Сумма расходов', 'Project': 'Проект'})
+                fig_costs.update_layout(xaxis_title=None,
+                                        yaxis_title=None, showlegend=False)
+                st.plotly_chart(fig_costs, use_container_width=True)
 
         left_col_pie, right_col_pie = st.columns(2)
-
         with left_col_pie:
-            income_category_sums = filtered_incomes.groupby(
-                'Category')['Amount'].sum().reset_index()
-
-            fig_income_pie = px.pie(income_category_sums, values='Amount',
-                                    names='Category', title="Доходы по категориям",
-                                    labels={'Amount': 'Сумма', 'Category': 'Категория'})
-
-            # fig_income_pie.update_layout(showlegend=False)
-
+            fig_income_pie = px.pie(income_categories_df,
+                                    values='TotalAmount', names='Category',
+                                    title="Доходы по категориям", labels={'TotalAmount': 'Сумма', 'Category': 'Категория'})
             st.plotly_chart(fig_income_pie, use_container_width=True)
 
         with right_col_pie:
-            cost_category_sums = filtered_costs.groupby(
-                'Category')['Amount'].sum().reset_index()
-
-            fig_cost_pie = px.pie(cost_category_sums, values='Amount',
-                                  names='Category',
-                                  title="Расходы по категориям",
-                                  labels={'Amount': 'Сумма', 'Category': 'Категория'})
-
-            # fig_cost_pie.update_layout(showlegend=False)
-
+            fig_cost_pie = px.pie(cost_categories_df, values='TotalAmount', names='Category',
+                                  title="Расходы по категориям", labels={'TotalAmount': 'Сумма', 'Category': 'Категория'})
             st.plotly_chart(fig_cost_pie, use_container_width=True)
 
 
