@@ -5,11 +5,11 @@ import pandas as pd
 import plotly.express as px
 from scipy.stats import spearmanr
 
-
+# Список бд из текущей директории
 def get_db_files():
     return [f for f in os.listdir() if f.endswith('.db')]
 
-
+# Подключение
 def connect_to_db(db_name):
     try:
         conn = sqlite3.connect(db_name, check_same_thread=False)
@@ -60,7 +60,7 @@ def visualize_data(topic):
             return pd.read_sql_query(query, conn)
         except Exception as e:
             st.error(f"Ошибка выполнения запроса: {e}")
-
+    # Изменение фона ячейка в рамках корреляции 
     def highlight_max(val, column_name):
         if column_name == 'Комментарии-Продолжительность':
             max_value = correlation_df['Комментарии-Продолжительность'].max()
@@ -92,7 +92,7 @@ def visualize_data(topic):
         videos_df['CreationDate'] = pd.to_datetime(videos_df['CreationDate'])
         comments_df['CreationDate'] = pd.to_datetime(
             comments_df['CreationDate'])
-
+        # Выбор каналов через unique
         selected_channel = st.selectbox(
             "Выберите канал:", videos_df['Channel'].unique())
         filtered_videos = videos_df[videos_df['Channel'] == selected_channel]
@@ -122,7 +122,7 @@ def visualize_data(topic):
         video_ids = filtered_videos['ID'].unique()
         filtered_comments = comments_df[comments_df['Video_ID'].isin(
             video_ids)]
-
+        # Суммирование по месяцам
         videos_grouped = filtered_videos.resample(
             'M', on='CreationDate').sum().reset_index()
 
