@@ -546,6 +546,8 @@ if section == "Введение":
         with pic2:
             st.image("data/Logical_model.png",
                      caption="Логическая модель БД")
+    st.markdown(
+        '#### [Отчет по проекту](https://github.com/kovdanigor/youtube_db_project/blob/main/Отчет%20по%20проекту.pdf)')
 
 elif section == "Анализ":
     st.sidebar.header("Настройки анализа")
